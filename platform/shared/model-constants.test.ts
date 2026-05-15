@@ -26,10 +26,32 @@ describe("provider API key optional helpers", () => {
     ).toBe(true);
   });
 
+  test("treats Anthropic as optional only when WIF is enabled", () => {
+    expect(isProviderApiKeyOptional({ provider: "anthropic" })).toBe(false);
+    expect(
+      isProviderApiKeyOptional({
+        anthropicWifEnabled: false,
+        provider: "anthropic",
+      }),
+    ).toBe(false);
+    expect(
+      isProviderApiKeyOptional({
+        anthropicWifEnabled: true,
+        provider: "anthropic",
+      }),
+    ).toBe(true);
+  });
+
   test("lists providers with optional API keys", () => {
     expect(getProvidersWithOptionalApiKey()).toEqual(["ollama", "vllm"]);
     expect(
       getProvidersWithOptionalApiKey({ azureEntraIdEnabled: true }),
     ).toEqual(["ollama", "vllm", "azure"]);
+    expect(
+      getProvidersWithOptionalApiKey({
+        anthropicWifEnabled: true,
+        azureEntraIdEnabled: true,
+      }),
+    ).toEqual(["ollama", "vllm", "anthropic", "azure"]);
   });
 });

@@ -3,6 +3,10 @@ import { ArchestraInternalErrorCode } from "@shared";
 import { encode as toonEncode } from "@toon-format/toon";
 import { get } from "lodash-es";
 import {
+  getAnthropicWifAccessToken,
+  isAnthropicWifEnabled,
+} from "@/clients/anthropic-wif-credentials";
+import {
   getAzureAiFoundryBearerTokenProvider,
   isAnthropicAzureFoundryEntraIdEnabled,
 } from "@/clients/azure-openai-credentials";
@@ -1172,6 +1176,19 @@ export const anthropicAdapterFactory: LLMProvider<
       });
     }
 
+    if (!apiKey && isAnthropicWifEnabled()) {
+      return new AnthropicProvider({
+        apiKey: null,
+        authToken: null,
+        baseURL: options.baseUrl,
+        fetch: createAnthropicWifFetch(customFetch),
+        defaultHeaders: {
+          ...options.defaultHeaders,
+          Authorization: "Bearer <wif-managed>",
+        },
+      });
+    }
+
     return new AnthropicProvider({
       apiKey: regularApiKey,
       authToken: token,
@@ -1249,6 +1266,24 @@ function createAnthropicAzureFoundryFetch(
     const tokenProvider = getAzureAiFoundryBearerTokenProvider();
     const headers = new Headers(init?.headers);
     headers.set("Authorization", `Bearer ${await tokenProvider()}`);
+
+    const fetchFn = baseFetch ?? globalThis.fetch;
+    return fetchFn(input, {
+      ...init,
+      headers,
+    });
+  };
+}
+
+function createAnthropicWifFetch(
+  baseFetch: typeof globalThis.fetch | undefined,
+): typeof globalThis.fetch {
+  return async (input, init) => {
+    const headers = new Headers(init?.headers);
+    headers.set(
+      "Authorization",
+      `Bearer ${await getAnthropicWifAccessToken()}`,
+    );
 
     const fetchFn = baseFetch ?? globalThis.fetch;
     return fetchFn(input, {

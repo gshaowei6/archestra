@@ -1,4 +1,5 @@
 import { isProviderApiKeyOptional, type SupportedProvider } from "@shared";
+import { isAnthropicWifEnabled } from "@/clients/anthropic-wif-credentials";
 import { isAzureOpenAiEntraIdEnabled } from "@/clients/azure-openai-credentials";
 import { getProviderEnvApiKey } from "@/config";
 import { LlmProviderApiKeyModel, TeamModel } from "@/models";
@@ -71,8 +72,9 @@ export async function resolveProviderApiKey(params: {
 
     if (
       isProviderApiKeyOptional({
-        provider,
+        anthropicWifEnabled: isAnthropicWifEnabled(),
         azureEntraIdEnabled: isAzureOpenAiEntraIdEnabled(),
+        provider,
       })
     ) {
       return {

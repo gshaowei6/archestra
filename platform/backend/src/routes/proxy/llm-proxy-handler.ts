@@ -21,6 +21,7 @@ import {
 } from "@shared";
 import type { FastifyReply, FastifyRequest } from "fastify";
 import { LRUCacheManager } from "@/cache-manager";
+import { isAnthropicWifEnabled } from "@/clients/anthropic-wif-credentials";
 import { isAzureOpenAiEntraIdEnabled } from "@/clients/azure-openai-credentials";
 import config from "@/config";
 import logger from "@/logging";
@@ -1566,6 +1567,7 @@ function shouldUseKeylessProviderApiKey(params: {
   }
 
   return isProviderApiKeyOptional({
+    anthropicWifEnabled: isAnthropicWifEnabled(),
     provider: row.provider,
     azureEntraIdEnabled: isAzureOpenAiEntraIdEnabled(),
   });

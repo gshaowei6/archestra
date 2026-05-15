@@ -21,6 +21,10 @@ import {
   USER_ID_HEADER,
 } from "@shared";
 import type { streamText } from "ai";
+import {
+  getAnthropicWifAccessToken,
+  isAnthropicWifEnabled,
+} from "@/clients/anthropic-wif-credentials";
 import { isAzureOpenAiEntraIdEnabled } from "@/clients/azure-openai-credentials";
 import {
   createAzureFetchWithApiVersion,
@@ -293,6 +297,8 @@ export async function createLLMModelForAgent(params: {
   const isOllama = provider === "ollama";
   const isAzureWithEntra =
     provider === "azure" && isAzureOpenAiEntraIdEnabled();
+  const isAnthropicWithWif =
+    provider === "anthropic" && isAnthropicWifEnabled();
 
   logger.info(
     {
@@ -303,6 +309,7 @@ export async function createLLMModelForAgent(params: {
       isVllm,
       isOllama,
       isAzureWithEntra,
+      isAnthropicWithWif,
     },
     "Using LLM provider API key",
   );
@@ -313,7 +320,8 @@ export async function createLLMModelForAgent(params: {
     !isBedrockWithIamAuth &&
     !isVllm &&
     !isOllama &&
-    !isAzureWithEntra
+    !isAzureWithEntra &&
+    !isAnthropicWithWif
   ) {
     throw new ApiError(
       400,
@@ -375,8 +383,18 @@ const providerModelConfigs: Record<SupportedProvider, ProviderModelConfig> = {
   // --- Native SDK providers (use their own SDK, call client(modelName)) ---
 
   anthropic: {
-    createModel: ({ apiKey, modelName, baseURL, headers, fetch }) =>
-      createAnthropic({ apiKey, baseURL, headers, fetch })(modelName),
+    createModel: ({ apiKey, modelName, baseURL, headers, fetch }) => {
+      if (!apiKey && isAnthropicWifEnabled()) {
+        return createAnthropic({
+          authToken: KEYLESS_PROVIDER_API_KEY_PLACEHOLDER,
+          baseURL,
+          fetch: createAnthropicWifFetch(fetch),
+          headers,
+        })(modelName);
+      }
+
+      return createAnthropic({ apiKey, baseURL, headers, fetch })(modelName);
+    },
     defaultBaseUrl: config.llm.anthropic.baseUrl,
     apiKeyRequiredMessage:
       "Anthropic API key is required. Please configure ANTHROPIC_API_KEY.",
@@ -637,6 +655,24 @@ function createTracedFetch(): typeof globalThis.fetch {
       headers.set(key, value);
     }
     return globalThis.fetch(input, { ...init, headers });
+  };
+}
+
+function createAnthropicWifFetch(
+  baseFetch: typeof globalThis.fetch | undefined,
+): typeof globalThis.fetch {
+  return async (input, init) => {
+    const headers = new Headers(init?.headers);
+    headers.set(
+      "Authorization",
+      `Bearer ${await getAnthropicWifAccessToken()}`,
+    );
+
+    const fetchFn = baseFetch ?? globalThis.fetch;
+    return fetchFn(input, {
+      ...init,
+      headers,
+    });
   };
 }
 

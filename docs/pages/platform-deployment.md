@@ -778,6 +778,13 @@ These environment variables set the default base URL for each LLM provider. Per-
   - Uses Azure Identity `DefaultAzureCredential` with token scope `https://ai.azure.com/.default`
   - Claude deployments must already exist in the Azure resource. Microsoft lists additional Claude prerequisites: paid eligible subscription, supported region, Azure Marketplace access for partner models, permission to subscribe to model offerings, and Contributor or Owner role on the resource group. Azure also requires Anthropic deployment metadata: `industry`, `organizationName`, and `countryCode`.
 
+- **`ARCHESTRA_ANTHROPIC_WIF_ENABLED`** - Enable Anthropic Workload Identity Federation (WIF) authentication without a static Anthropic API key.
+  - Default: `false`
+  - Requires `ARCHESTRA_ANTHROPIC_FEDERATION_RULE_ID`, `ARCHESTRA_ANTHROPIC_ORGANIZATION_ID`, `ARCHESTRA_ANTHROPIC_SERVICE_ACCOUNT_ID`, and either `ARCHESTRA_ANTHROPIC_IDENTITY_TOKEN_FILE` or `ARCHESTRA_ANTHROPIC_IDENTITY_TOKEN`.
+  - Optional: `ARCHESTRA_ANTHROPIC_WORKSPACE_ID` scopes the minted token to a workspace when the federation rule covers multiple workspaces.
+  - Archestra exchanges the identity-provider JWT for a short-lived Anthropic access token and refreshes it before expiry.
+  - The legacy `ARCHESTRA_ANTHROPIC_WIF_*` variable names are also accepted for compatibility.
+
 - **`ARCHESTRA_GEMINI_BASE_URL`** - Override the Google Gemini API base URL.
   - Default: `https://generativelanguage.googleapis.com`
   - Use this to point to your own proxy or other custom endpoints

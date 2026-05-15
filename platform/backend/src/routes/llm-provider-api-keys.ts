@@ -9,6 +9,7 @@ import type { FastifyPluginAsyncZod } from "fastify-type-provider-zod";
 import { capitalize } from "lodash-es";
 import { z } from "zod";
 import { hasPermission, userHasPermission } from "@/auth";
+import { isAnthropicWifEnabled } from "@/clients/anthropic-wif-credentials";
 import { isAzureOpenAiEntraIdEnabled } from "@/clients/azure-openai-credentials";
 import {
   type BedrockSigV4Credentials,
@@ -247,8 +248,9 @@ const llmProviderApiKeyRoutes: FastifyPluginAsyncZod = async (fastify) => {
               }
               return (
                 isProviderApiKeyOptional({
-                  provider: data.provider,
+                  anthropicWifEnabled: isAnthropicWifEnabled(),
                   azureEntraIdEnabled: isAzureOpenAiEntraIdEnabled(),
+                  provider: data.provider,
                 }) || data.apiKey
               );
             },
@@ -385,8 +387,9 @@ const llmProviderApiKeyRoutes: FastifyPluginAsyncZod = async (fastify) => {
       if (
         !secret &&
         !isProviderApiKeyOptional({
-          provider: body.provider,
+          anthropicWifEnabled: isAnthropicWifEnabled(),
           azureEntraIdEnabled: isAzureOpenAiEntraIdEnabled(),
+          provider: body.provider,
         })
       ) {
         throw new ApiError(
@@ -416,8 +419,9 @@ const llmProviderApiKeyRoutes: FastifyPluginAsyncZod = async (fastify) => {
       const canSync =
         actualApiKeyValue ||
         isProviderApiKeyOptional({
-          provider: body.provider,
+          anthropicWifEnabled: isAnthropicWifEnabled(),
           azureEntraIdEnabled: isAzureOpenAiEntraIdEnabled(),
+          provider: body.provider,
         });
       if (canSync) {
         try {
@@ -725,8 +729,9 @@ const llmProviderApiKeyRoutes: FastifyPluginAsyncZod = async (fastify) => {
           );
         } else if (
           !isProviderApiKeyOptional({
-            provider: apiKeyFromDB.provider,
+            anthropicWifEnabled: isAnthropicWifEnabled(),
             azureEntraIdEnabled: isAzureOpenAiEntraIdEnabled(),
+            provider: apiKeyFromDB.provider,
           })
         ) {
           throw new ApiError(

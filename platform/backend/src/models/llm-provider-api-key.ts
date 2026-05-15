@@ -5,6 +5,7 @@ import {
   type SupportedProvider,
 } from "@shared";
 import { and, asc, desc, eq, ilike, inArray, or, sql } from "drizzle-orm";
+import { isAnthropicWifEnabled } from "@/clients/anthropic-wif-credentials";
 import { isAzureOpenAiEntraIdEnabled } from "@/clients/azure-openai-credentials";
 import db, { schema } from "@/database";
 import { computeSecretStorageType } from "@/secrets-manager/utils";
@@ -273,6 +274,7 @@ class LlmProviderApiKeyModel {
       inArray(
         schema.llmProviderApiKeysTable.provider,
         getProvidersWithOptionalApiKey({
+          anthropicWifEnabled: isAnthropicWifEnabled(),
           azureEntraIdEnabled: isAzureOpenAiEntraIdEnabled(),
         }),
       ),
@@ -429,6 +431,7 @@ class LlmProviderApiKeyModel {
       inArray(
         schema.llmProviderApiKeysTable.provider,
         getProvidersWithOptionalApiKey({
+          anthropicWifEnabled: isAnthropicWifEnabled(),
           azureEntraIdEnabled: isAzureOpenAiEntraIdEnabled(),
         }),
       ),
@@ -746,6 +749,7 @@ function canUseProviderApiKey(
   }
 
   return getProvidersWithOptionalApiKey({
+    anthropicWifEnabled: isAnthropicWifEnabled(),
     azureEntraIdEnabled: isAzureOpenAiEntraIdEnabled(),
   }).includes(apiKey.provider);
 }

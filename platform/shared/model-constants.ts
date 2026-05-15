@@ -85,8 +85,9 @@ export const providerDisplayNames: Record<SupportedProvider, string> = {
 
 /**
  * Providers where an API key can be omitted when creating a provider key.
- * Self-hosted providers are always optional. Azure is optional only when
- * Microsoft Entra ID authentication is enabled in the backend environment.
+ * Self-hosted providers are always optional. Anthropic and Azure are optional
+ * only when their keyless authentication modes are enabled in the backend
+ * environment.
  */
 const PROVIDERS_WITH_OPTIONAL_API_KEY = new Set<SupportedProvider>([
   "ollama",
@@ -95,18 +96,24 @@ const PROVIDERS_WITH_OPTIONAL_API_KEY = new Set<SupportedProvider>([
 
 export function isProviderApiKeyOptional(params: {
   provider: SupportedProvider;
+  anthropicWifEnabled?: boolean;
   azureEntraIdEnabled?: boolean;
 }): boolean {
   return (
     PROVIDERS_WITH_OPTIONAL_API_KEY.has(params.provider) ||
+    (params.provider === "anthropic" && params.anthropicWifEnabled === true) ||
     (params.provider === "azure" && params.azureEntraIdEnabled === true)
   );
 }
 
 export function getProvidersWithOptionalApiKey(params?: {
+  anthropicWifEnabled?: boolean;
   azureEntraIdEnabled?: boolean;
 }): SupportedProvider[] {
   const providers = [...PROVIDERS_WITH_OPTIONAL_API_KEY];
+  if (params?.anthropicWifEnabled === true) {
+    providers.push("anthropic");
+  }
   if (params?.azureEntraIdEnabled === true) {
     providers.push("azure");
   }
